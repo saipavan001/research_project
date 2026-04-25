@@ -1,0 +1,15 @@
+{
+  "name": "rpms",
+  "version": "1.0.0",
+  "description": "Module to record and maintain the research projects",
+  "license": "ISC",
+  "author": "Sai Pavan Kotagiri",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
