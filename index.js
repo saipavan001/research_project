@@ -11,4 +11,5 @@ app.use(express.json());
 
 app.use('/auth',authController);
 
+
 app.listen(3000);

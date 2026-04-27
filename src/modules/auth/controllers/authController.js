@@ -1,6 +1,7 @@
 const userService = require('../services/authService');
 const {validationCheck} = require('../validators/authValidator');
 
+
 const userRegistration = async(req,res)=>{
     try{
             const {error,value} = validationCheck.validate(req.body);
@@ -22,4 +23,19 @@ const userRegistration = async(req,res)=>{
     }
 }
 
-module.exports = {userRegistration};
+const userLogin = async(req,res)=>{
+     try{
+        const body = req.body;
+        if(body){
+            const{email, password} = body;
+            const token = await userService.userLoginService(email,password);
+            res.status(200).json({token:token});
+        }else{
+            throw new Error("the body is empty");   
+        }
+     }catch(err){
+        res.status(402).json({message:err.message});
+     }
+}
+
+module.exports = {userRegistration,userLogin};
