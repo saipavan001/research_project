@@ -5,8 +5,7 @@ const jwt = require('jsonwebtoken');
 
 const userRegistraionService = async(name,email,password) => {
     const password_hash = await bcrypt.hash(password,10);
-    const email_check_query = "SELECT * from users WHERE email = ?";
-    const [email_check_qury_execution] = await db.execute(email_check_query,[email]);
+    const email_check_qury_execution = await authRepo.findEmail(email);
     if(email_check_qury_execution.length > 0) {
         throw new Error("Email already registered");
     }else{
@@ -16,8 +15,7 @@ const userRegistraionService = async(name,email,password) => {
 }
 
 const userLoginService = async(email,password) => {
-            const email_query = "SELECT password_hash,name,id from users where email = ?";
-            const [result] = await db.execute(email_query,[email]);
+            const result = await authRepo.findEmail(email); 
             if(result.length > 0){
                 const password_hash = result[0].password_hash;
                 const compare = await bcrypt.compare(password,password_hash);
@@ -29,16 +27,48 @@ const userLoginService = async(email,password) => {
                     {expiresIn: '15m'}
                     );
 
-                    if(token){
-                        return token;
+                    const refreshToken = jwt.sign({userId:result[0].id},process.env.JWT_REFRESH_SECRET,{expiresIn:"7d"});
+                    const refreshTokenHash = await bcrypt.hash(refreshToken,10);
+                    const saveRefreshToken = await authRepo.saveRefreshToken(result[0].id,refreshTokenHash);
+
+                    if(token && saveRefreshToken){
+                        return [token,refreshToken];
                     }else{
                         throw new Error('the token is not generated')
                     }
                 }else{
                     throw new Error ("the Password does't mach with the password enetered");
                 }
-                
             }
 }
 
-module.exports = {userRegistraionService,userLoginService};
+const refresh = async(refreshToken) => {
+            const checkRefreshToken = await jwt.verify(refreshToken,process.env.JWT_REFRESH_SECRET);
+            if(checkRefreshToken){
+                const refreshTokenDetails = authRepo.checkRefreshToken(checkRefreshToken.userId);
+                
+                if(refreshTokenDetails[0].length > 0){
+                    const token_hash = refreshTokenDetails[0][0].token_hash;
+                    const expires_at = refreshTokenDetails[0][0].expires_at;
+
+                    const refreshTokenCompare = await bcrypt.compare(refreshToken,token_hash);
+                    if(refreshTokenCompare){
+                        if(new Date() < expires_at){
+                            const new_token = jwt.sign({userId:checkRefreshToken.userId},process.env.JWT_SECRET,{expiresIn:'15m'});
+                            return new_token;
+                            
+                        }else{
+                            throw new Error("The refresh token is expired");
+                        }  
+                    }else{
+                        throw new Error("The refresh token doest match");
+                    }
+                }else{
+                    throw new Error("The sored refresh token is not found");
+                }
+            }else{
+                throw new Error("Invalid refresh token");
+            }
+}
+
+module.exports = {userRegistraionService,userLoginService,refresh};
