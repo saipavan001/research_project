@@ -13,6 +13,7 @@ const userRegistration = async(req,res)=>{
                 message: error.details[0].message
             });
         }
+        
         const { name, email, password } = value;
         if(name && email && password){
             const result = await userService.userRegistraionService(name,email,password);
@@ -54,6 +55,21 @@ const refresh = async(req,res) => {
     }
 }
 
-module.exports = {userRegistration,userLogin,refresh};
+const logout = async(req,res)=>{
+    try{
+        const {refreshToken} = req.body;
+        if(refreshToken){
+            const result = await userService.logout(refreshToken);
+            res.status(200).json({message:"susscefully logged out"});
+        }else{
+            throw new Error("Could not get the refresh token");
+        }
+    }catch(err){
+        res.status(500).json({message:err.message});
+    }
+
+}
+
+module.exports = {userRegistration,userLogin,refresh,logout};
 
 

@@ -25,4 +25,15 @@ const checkRefreshToken = async(userId)=>{
     return refreshTokenDetails;
 }
 
-module.exports = {insertUser,findEmail,saveRefreshToken,checkRefreshToken};
+const logout = async(userId) => {
+    const [dbQuery] = await db.execute('SELECT id FROM refresh_tokens WHERE user_id = ?',[userId]);
+        if(dbQuery.length > 0){
+            const id = dbQuery[0].id;
+            const deleteRefreshToken = await db.execute('Delete from refresh_tokens WHERE id = ?',[id]);
+            return true;
+        }else{
+            throw new Error("No Saved Data of Refresh token is found");
+        }
+}
+
+module.exports = {insertUser,findEmail,saveRefreshToken,checkRefreshToken,logout};

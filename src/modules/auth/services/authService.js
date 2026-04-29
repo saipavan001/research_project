@@ -71,4 +71,16 @@ const refresh = async(refreshToken) => {
             }
 }
 
-module.exports = {userRegistraionService,userLoginService,refresh};
+
+const logout = async(refreshToken) => {
+    const verifyToken = jwt.verify(refreshToken,process.env.JWT_REFRESH_SECRET);
+    if(verifyToken){
+        const userId = verifyToken.userId;
+        const result = await authRepo.logout(userId);
+        return result;
+    }else{
+        throw new Error("The refresh verification is failed.")
+    }
+}
+
+module.exports = {userRegistraionService,userLoginService,refresh,logout};
